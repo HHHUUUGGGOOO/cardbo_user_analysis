@@ -21,16 +21,22 @@
     #e. log data : action, value, timestamp
     #f. convert raw data to : 每項大功能及子功能點擊比例排行, 依類別搜尋點擊比例排行, 我的信用卡優惠點擊比例排行
 #####################################################################################################################################################################################
+
+####################################################################################################################################
+#                                                           import                                                                 # 
+####################################################################################################################################
 import json
-import time, datetime
+import time
+import datetime
 import yaml 
 import pathlib # without open file
 from ruamel.yaml import YAML # could retend comments in yaml file
 
-func_dict = {}
-cate_dict = {}
+####################################################################################################################################
+#                                                          parameter                                                               #
+####################################################################################################################################
+func_dict, cate_dict, TotalClick = {}, {}, {}
 month_list = []
-TotalClick = {}
 last_time = ""
 # 加卡伯好友
 follow_cardbo = {}
@@ -56,19 +62,9 @@ ask_cardbo_question = {}
 online_shop, food, leisure, department_store, market, life = {}, {}, {}, {}, {}, {}
 transport, travel, abroad, payment, others = {}, {}, {}, {}, {}
 
-def openfile_SR():
-    with open('./user_action_log/UserData.json', 'r', encoding='utf-8') as f1:
-        file = json.load(f1)
-    for i in range(len(file["user"])):
-        user_id = file["user"][i]["lineId"]
-        action = file["user"][i]["actionName"]
-        value = file["user"][i]["actionValue"]
-        timestamp = file["user"][i]["time"]["$date"]
-        # 分別是 Ryan 和 Brandon 的 user_id
-        if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
-            ClickCategory(action, value, timestamp)
-        if i % 1000 == 0: print(i)
-
+####################################################################################################################################
+#                                                        help function                                                             #
+####################################################################################################################################
 def addTwoDimDict(dict, key_1, key_2, val_2): # Category Ranking 要加進一筆二維dict資料
     if (key_1 in dict): dict[key_1].update({key_2: val_2})
     else: dict.update({key_1: {key_2: val_2}})
@@ -81,6 +77,22 @@ def addThreeDimDict(thedict, key_a, key_b, key_c, val): # Function Ranking 要�
             thedict[key_a].update({key_b: {key_c: val}})
     else:
         thedict.update({key_a: {key_b: {key_c: val}}})
+
+####################################################################################################################################
+#                                                        main function                                                             #
+####################################################################################################################################
+def openfile_SR(filename):
+    with open('./user_action_log/UserData/json_data/UserData_0928.json', 'r', encoding='utf-8') as f1:
+        file = json.load(f1)
+    for i in range(len(file["user"])):
+        user_id = file["user"][i]["lineId"]
+        action = file["user"][i]["actionName"]
+        value = file["user"][i]["actionValue"]
+        timestamp = file["user"][i]["time"]["$date"]
+        # 分別是 Ryan 和 Brandon 的 user_id
+        if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
+            ClickCategory(action, value, timestamp)
+        if i % 1000 == 0: print(i)
 
 def ClickCategory(action, value, timestamp):
     global TotalClick, month_list, follow_cardbo, call_cardbo, search_store, \
@@ -152,11 +164,7 @@ def ClickCategory(action, value, timestamp):
     if (action == "ask cardbo question"): ask_cardbo_question[timestamp[0:7]] += 1 #卡伯小幫手
     TotalClick[timestamp[0:7]] += 1
     last_time = timestamp[0:7]
-    #建檔
-    Func2Json(last_time)
-    Cate2Json(last_time)
-
-
+    
 def SearchStore(value, timestamp):
     global online_shop, food, leisure, department_store, market, life, \
            transport, travel, abroad, payment, others
@@ -173,7 +181,6 @@ def SearchStore(value, timestamp):
     if (value == "payment"): payment[timestamp[0:7]] += 1
     if (value == "others"): others[timestamp[0:7]] += 1
     # 關鍵字搜尋 (字串分類)
-
 
 def Func2Json(filename): #功能建檔-Function
     global func_dict, TotalClick, month_list, follow_cardbo, call_cardbo, search_store, \
@@ -248,7 +255,6 @@ def Func2Json(filename): #功能建檔-Function
     file = './user_action_log/Serve_Ranking/Function/%s.json' % filename
     with open(file, 'w', encoding='utf-8') as f: json.dump(func_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
 
-
 def Cate2Json(filename): #類別建檔-Category
     global cate_dict, online_shop, food, leisure, department_store, market, life, \
            transport, travel, abroad, payment, others, search_store, search_category
@@ -297,22 +303,23 @@ def Cate2Json(filename): #類別建檔-Category
     file = './user_action_log/Serve_Ranking/Category/%s.json' % filename
     with open(file, 'w', encoding='utf-8') as f: json.dump(cate_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
 
+def CleanCache_SR():
+    global month_list, func_dict, cate_dict, TotalClick
+    func_dict.clear()
+    cate_dict.clear()
+    month_list.clear()
+    TotalClick.clear()
+
+####################################################################################################################################
+#                                                              main                                                                #
+####################################################################################################################################
+if __name__=="__main__":
+    # 每週一更新一次資料
+    if (datetime.date.today().weekday() == 0):
+        openfile_SR('filename')
+        Func2Json('filename')
+        Cate2Json('filename')
 
 
-openfile_SR()
-
-# 2020-09
-#ClickCategory("call cardbo", "new user", "2020-09-08 10:20")
-#ClickCategory("LIFF_user_add_card", "<card_1>", "2020-09-08 18:13")
-#ClickCategory("LIFF_user_search_card", "<card_2>", "2020-09-09 00:20")
-#ClickCategory("search store", "food", "2020-09-09 11:20")
-#ClickCategory("search store", "online_shop", "2020-09-09 12:20")
-#ClickCategory("offer detail", "<0>*<card_3>", "2020-09-10 14:50")
-# 2020-10
-#ClickCategory("search store", "life", "2020-10-09 09:20")
-#ClickCategory("follow cardbo", "", "2020-10-10 14:50")
-# 2020-02
-#ClickCategory("follow cardbo", "", "2020-02-01 14:50")
-# 2021-02
-#ClickCategory("go_setting", "", "2021-02-14 14:50")
+#openfile_SR()吃的檔案 & 建檔吃的filename
 

@@ -8,31 +8,28 @@
 #d. log data : DAU 的 json file
 #e. convert raw data to : MAU
 ########################################################################################
-import datetime
+
+####################################################################################################################################
+#                                                           import                                                                 # 
+####################################################################################################################################
+from datetime import datetime
 import json
 import yaml # import yaml
 import pathlib # without open file
 from ruamel.yaml import YAML # could retend comments in yaml file
 
-MAU = 0
-Users = 0
-filename = ""
-now = datetime.datetime.now()
-yearlist = []
+####################################################################################################################################
+#                                                          parameter                                                               #
+####################################################################################################################################
 datadict = {} # (key : value) will be like ( "2020-09": {"點擊次數": 1450, "統計時間": "09/01-09/30"} )
-monthlist = []
-month = ""
-start_date = ""
-end_date = ""
-store_MAU = ""
+monthlist, yearlist = [], []
+MAU, Users = 0, 0
+filename, month, start_date, end_date, store_MAU = "", "", "", "", ""
+now = datetime.now()
 
-
-def openfile():
-    for mon in ["2020-09"]:
-        with open('./user_action_log/DAU/%s.json'%mon, 'r', encoding='utf-8') as f1:
-            file_1 = json.load(f1)
-        MAUData2Json(file_1)
-
+####################################################################################################################################
+#                                                        help function                                                             #
+####################################################################################################################################
 def isLeapYear(year): # 統計時間需要判斷2月當年最後一天是幾號
     yy = eval(year)
     if (yy % 4 == 0):
@@ -46,6 +43,15 @@ def isLeapYear(year): # 統計時間需要判斷2月當年最後一天是幾號
 def addTwoDimDict(dict, key_1, key_2, val_2): # MAU 要加進一筆二維dict資料
     if (key_1 in dict): dict[key_1].update({key_2: val_2})
     else: dict.update({key_1: {key_2: val_2}})
+
+####################################################################################################################################
+#                                                        main function                                                             #
+####################################################################################################################################
+def openfile(filename):
+    for mon in ["2020-09"]:
+        with open('./user_action_log/DAU/%s.json'%mon, 'r', encoding='utf-8') as f1:
+            file_1 = json.load(f1)
+        MAUData2Json(file_1)
 
 def MAUData2Json(file): # 吃進的file裡面都是同個月份的日期，如: 2020-09.json
     global MAU, Users, filename, now, yearlist, datadict, monthlist, month, start_date, end_date, store_MAU
@@ -82,4 +88,20 @@ def MAUData2Json(file): # 吃進的file裡面都是同個月份的日期，如: 
                 with open(file, 'w', encoding='utf-8') as f: json.dump(add_MAU, f, indent=4, sort_keys=True, separators=(',', ': '))
     MAU = 0
 
-openfile()
+def CleanCache_MAU():
+    global yearlist, monthlist, datadict
+    yearlist.clear()
+    monthlist.clear()
+    datadict.clear()
+
+####################################################################################################################################
+#                                                              main                                                                #
+####################################################################################################################################
+#if __name__=="__main__":
+    #now = datetime.now()
+    # 每月 1 號更新一次資料
+    #if (now.day == 1):
+        #openfile('filename')
+
+
+# openfile 裡面要吃的檔要怎麼涵蓋到 DAU 所有檔案而不用列舉 list

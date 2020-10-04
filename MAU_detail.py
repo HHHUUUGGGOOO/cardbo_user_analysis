@@ -1,5 +1,5 @@
 ###########################################################################################
-# 1. 看一週內的user有多少人 (WAU)
+# 1. 看一個月內的user有多少人 (MAU_datail)
 # 2. 這群人中有使用"呼叫卡伯 or search store"的又有多少人?比例?
 # 3. 這些"search store"中搜尋字是"電商"的又有多少, list & 各佔比 (如: 蝦皮, pchome, 生活市集等)
 ###########################################################################################
@@ -16,13 +16,13 @@ from ruamel.yaml import YAML # could retend comments in yaml file
 ####################################################################################################################################
 #                                                          parameter                                                               #
 ####################################################################################################################################
-WAU, top_ten_ecommerce = 0, 0
+MAU, top_ten_ecommerce = 0, 0
 cc, cc_user = 0, 0 #call cardbo
-week_list, user_list, ccuser_list, e_commerce_list, other_list = [], [], [], [], []
-WAU_dict = {}
+month_list, user_list, ccuser_list, e_commerce_list, other_list = [], [], [], [], []
+MAU_dict = {}
 pchome, momo, shopee, yahoo, sensen, udn, rakuten, books, pinkoi, lifemarket, yummy = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-end_date = (datetime.date.today()).strftime('%Y-%m-%d')
-start_date = (datetime.date.today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+start_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m') + "-01" #前個月第一天
+end_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d') #前個月最後一天
 list_act = ["call cardbo", "my credit card offer", "check card offer", "search store", "see more", \
             "see another", "search by category when not finding any store", \
             "turn back to main richmenu", "follow cardbo", "offer detail", "see_all_offer", \
@@ -40,7 +40,7 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資
 ####################################################################################################################################
 #                                                        main function                                                             #
 ####################################################################################################################################
-def openfile_WAU(filename):
+def openfile_MAU_detail(filename):
     with open('./user_action_log/UserData/json_data/UserData_0928.json', 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
@@ -50,23 +50,22 @@ def openfile_WAU(filename):
         timestamp = file["user"][i]["time"]["$date"]
         # 分別是 Ryan 和 Brandon 的 user_id
         if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
-            WAUCalculate(user_id, action, value, timestamp)
+            MAUCalculate(user_id, action, value, timestamp)
         if i % 1000 == 0: print(i)
 
-def WAUCalculate(user_id, action, value, timestamp):
-    global WAU, week_list, start_date, list_act, list_not, user_list, cc, cc_user, ccuser_list, \
+def MAUCalculate(user_id, action, value, timestamp):
+    global MAU, month_list, start_date, list_act, list_not, user_list, cc, cc_user, ccuser_list, \
            pchome, momo, shopee, yahoo, sensen, udn, rakuten, books, pinkoi, lifemarket, yummy, \
-           top_ten_ecommerce, WAU_dict, e_commerce_list, other_list, end_date
+           top_ten_ecommerce, MAU_dict, e_commerce_list, other_list, end_date
     percent_ccuser = 0
     # mark=1 代表在十大電商中, mark=0 為 default, 表不在十大電商中
     mark = 0 
-    for i in range(7):
-        end = (datetime.date.today() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
-        week_list.append(end)
-    if timestamp[0:10] in week_list:
-        # 一週內不同的user共有多少人
+    delta = int(end_date[8:10])-int(start_date[8:10])+1 #該月有多少天    
+    month_list.append(start_date[0:7])
+    if timestamp[0:7] in month_list:
+        # 一個月內不同的user共有多少人
         if (user_id not in user_list): 
-            WAU += 1 
+            MAU += 1 
             user_list.append(user_id)
         if (action == "call cardbo") or (action == "search store"):
             # 呼叫卡伯總使用次數
@@ -75,17 +74,17 @@ def WAUCalculate(user_id, action, value, timestamp):
                 # 有多少人使用呼叫卡伯
                 cc_user += 1 
                 ccuser_list.append(user_id)
-        if (WAU != 0): percent_ccuser = cc_user/WAU
-        if (WAU == 0): percent_ccuser = 0
-        # WAU
-        WAU_dict["WAU"] = WAU
+        if (MAU != 0): percent_ccuser = cc_user/MAU
+        if (MAU == 0): percent_ccuser = 0
+        # MAU
+        MAU_dict["MAU"] = MAU
         # 呼叫卡伯+關鍵字搜尋使用次數/人數/比例
-        addTwoDimDict(WAU_dict, "呼叫卡伯", "總使用次數", cc)
-        addTwoDimDict(WAU_dict, "呼叫卡伯", "總使用人數", cc_user)
-        addTwoDimDict(WAU_dict, "呼叫卡伯", "使用者佔比", round(percent_ccuser, 2))
+        addTwoDimDict(MAU_dict, "呼叫卡伯", "總使用次數", cc)
+        addTwoDimDict(MAU_dict, "呼叫卡伯", "總使用人數", cc_user)
+        addTwoDimDict(MAU_dict, "呼叫卡伯", "使用者佔比", round(percent_ccuser, 2))
         # 比對搜尋字串
-        addTwoDimDict(WAU_dict, "呼叫卡伯搜尋字串", "台灣十大電商搜尋字串", e_commerce_list)
-        addTwoDimDict(WAU_dict, "呼叫卡伯搜尋字串", "其他搜尋字串", other_list)
+        addTwoDimDict(MAU_dict, "呼叫卡伯搜尋字串", "台灣十大電商搜尋字串", e_commerce_list)
+        addTwoDimDict(MAU_dict, "呼叫卡伯搜尋字串", "其他搜尋字串", other_list)
         # 電商判斷
         if ("pchome" in value.lower()) or ("pc home" in value.lower()): 
             pchome += 1
@@ -135,48 +134,48 @@ def WAUCalculate(user_id, action, value, timestamp):
         '''
         if (mark == 0) and (action == "search store"): 
             other_list.append(value)
-            addTwoDimDict(WAU_dict, "呼叫卡伯搜尋字串", "其他搜尋字串", other_list)
+            addTwoDimDict(MAU_dict, "呼叫卡伯搜尋字串", "其他搜尋字串", other_list)
         if (mark == 1): 
             e_commerce_list.append(value)
-            addTwoDimDict(WAU_dict, "呼叫卡伯搜尋字串", "台灣十大電商搜尋字串", e_commerce_list)
+            addTwoDimDict(MAU_dict, "呼叫卡伯搜尋字串", "台灣十大電商搜尋字串", e_commerce_list)
         '''
         # 電商搜尋數據
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "台灣十大電商搜尋次數", top_ten_ecommerce)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "PChome", pchome)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "momo", momo)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "蝦皮購物", shopee)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "Yahoo", yahoo)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "森森", sensen)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "udn", udn)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "樂天", rakuten)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "博客來", books)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "Pinkoi", pinkoi)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "生活市集", lifemarket)
-        addTwoDimDict(WAU_dict, "電商搜尋數據", "好吃宅配", yummy)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "台灣十大電商搜尋次數", top_ten_ecommerce)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "PChome", pchome)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "momo", momo)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "蝦皮購物", shopee)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "Yahoo", yahoo)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "森森", sensen)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "udn", udn)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "樂天", rakuten)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "博客來", books)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "Pinkoi", pinkoi)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "生活市集", lifemarket)
+        addTwoDimDict(MAU_dict, "電商搜尋數據", "好吃宅配", yummy)
 
-def WAUData2Json(dict):
-    global start_date, end_date, WAU_dict
-    filename = start_date + '_' + end_date
-    file = './user_action_log/WAU/%s.json' % filename
-    with open(file, 'w', encoding='utf-8') as f: json.dump(WAU_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
+def MAUData2Json(dict):
+    global start_date, MAU_dict
+    filename = start_date[0:7]
+    file = './user_action_log/MAU/MAU_detail/%s.json' % filename
+    with open(file, 'w', encoding='utf-8') as f: json.dump(MAU_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
     
-def CleanCache_WAU():
-    global week_list, user_list, ccuser_list, e_commerce_list, other_list, WAU_dict
-    week_list.clear()
+def CleanCache_MAU():
+    global month_list, user_list, ccuser_list, e_commerce_list, other_list, MAU_dict
+    month_list.clear()
     user_list.clear()
     ccuser_list.clear()
     e_commerce_list.clear()
     other_list.clear()
-    WAU_dict.clear()
+    MAU_dict.clear()
 
 ####################################################################################################################################
 #                                                              main                                                                #
 ####################################################################################################################################
 #if __name__=="__main__":
-    # 每週一更新一次資料
-    #if (datetime.date.today().weekday() == 6):
-        #openfile_WAU('filename')
-        #WAUData2Json(WAU_dict)
+    # 每月更新一次資料
+    #if (now.day() == 1):
+        #openfile_MAU_detail('filename')
+        #MAUData2Json(MAU_dict)
 
 
 #openfile 的檔案

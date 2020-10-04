@@ -15,31 +15,41 @@
 #d. log data : user_id, action, timestamp 
 #e. convert raw data to : 觸發至少一次操作的點擊次數
 #####################################################################################################################################################################################
+
+####################################################################################################################################
+#                                                           import                                                                 # 
+####################################################################################################################################
 import json
 from datetime import datetime
 import yaml 
 import pathlib # without open file
 from ruamel.yaml import YAML # could retend comments in yaml file
 
+####################################################################################################################################
+#                                                          parameter                                                               #
+####################################################################################################################################
 myDAUdict = {} # (key : value) will be like ('2020-09-07' : 130 )
-now = datetime.now()
+DAU_dict, usernum_dict, MAU_dict = {}, {}, {}
+filenamelist, clicklist, userlist, MAUuserlist, monthlist = [], [], [], [], []
 list_act = ["call cardbo", "my credit card offer", "check card offer", "search store", "see more", \
             "see another", "search by category when not finding any store", \
             "turn back to main richmenu", "follow cardbo", "offer detail", "see_all_offer", \
             "no_card_and_go_setting", "go_setting", "LIFF_user_add_card", "LIFF_user_delete_card", \
             "LIFF_user_search_card", "share cardbo with friends", "ask cardbo question"] # 每次action加進click一次
 list_not = ["unfollow cardbo"] # 不算一次操作的action
-filenamelist = []
-clicklist = []
-userlist = []
-MAUuserlist = []
-monthlist = []
-DAU_dict = {}
-usernum_dict = {}
-MAU_dict = {}
 
-def openfile_DAU():
-    with open('./user_action_log/UserData.json', 'r', encoding='utf-8') as f1:
+####################################################################################################################################
+#                                                        help function                                                             #
+####################################################################################################################################
+def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資料
+    if (key_1 in dict): dict[key_1].update({key_2: val_2})
+    else: dict.update({key_1: {key_2: val_2}})
+
+####################################################################################################################################
+#                                                        main function                                                             #
+####################################################################################################################################
+def openfile_DAU(fname):
+    with open('./user_action_log/UserData/json_data/%s'%fname, 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
         user_id = file["user"][i]["lineId"]
@@ -48,11 +58,10 @@ def openfile_DAU():
         # 分別是 Ryan 和 Brandon 的 user_id
         if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
             ClickOnce(user_id, action, timestamp)
-        if i % 1000 == 0: print(i)
-
-def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資料
-    if (key_1 in dict): dict[key_1].update({key_2: val_2})
-    else: dict.update({key_1: {key_2: val_2}})
+        # 檢查是否有在執行
+        if i % 1000 == 0: 
+            text = "DAU: " + str(i)
+            print(text)
 
 def ClickOnce(user_id, action, timestamp):
     global myDAUdict, clicklist, userlist, MAUuserlist, monthlist, DAU_dict, usernum_dict, MAU_dict
@@ -85,8 +94,6 @@ def ClickOnce(user_id, action, timestamp):
             addTwoDimDict(myDAUdict, time_key, "Daily different users", usernum_dict[UsageClick])
     except: 
         print("Please log correct action name.") 
-    else: 
-        DAUData2Json(myDAUdict)
 
 def DAUData2Json(DAU_list):
     global now, filenamelist
@@ -101,15 +108,27 @@ def DAUData2Json(DAU_list):
                 add_DAU[date] = DAU_list[date]
                 with open(file, 'w', encoding='utf-8') as f: json.dump(add_DAU, f, indent=4, sort_keys=True, separators=(',', ': '))
 
+def CleanCache_DAU():
+    global myDAUdict, DAU_dict, usernum_dict, MAU_dict, filenamelist, clicklist, userlist, MAUuserlist, monthlist
+    filenamelist.clear()
+    clicklist.clear()
+    userlist.clear()
+    MAUuserlist.clear()
+    monthlist.clear()
+    DAU_dict.clear()
+    usernum_dict.clear()
+    MAU_dict.clear()
+    myDAUdict.clear()
 
-openfile_DAU()
-#ClickOnce("User_1", "call cardbo", "2020-09-08 10:20")
-#ClickOnce("User_2", "LIFF_user_add_card", "2020-09-08 18:13")
-#ClickOnce("User_3", "LIFF_user_search_card", "2020-09-09 00:20")
-#ClickOnce("User_4", "offer detail", "2020-09-10 14:50")
-#ClickOnce("User_5", "follow cardbo", "2020-10-10 14:50")
-#ClickOnce("User_6", "follow cardbo", "2020-02-01 14:50")
-#ClickOnce("User_7", "go_setting", "2021-02-14 14:50")
-#ClickOnce("User_3", "search store", "2020-09-09 11:20")
-#ClickOnce("User_3", "search store", "2020-09-09 12:20")
-#ClickOnce("User_3", "search store", "2020-10-09 09:20")
+####################################################################################################################################
+#                                                              main                                                                #
+####################################################################################################################################
+#if __name__=="__main__":
+    #now = datetime.now()
+    # 每天的 0:00 更新一次資料
+    #if (now.hour == 0) and (now.minute == 0):
+        #openfile_DAU('filename')
+        #DAUData2Json(myDAUdict)
+
+
+# openfile_DAU 吃進的 file 怎麼和 exe 檔連結

@@ -31,6 +31,7 @@ from ruamel.yaml import YAML # could retend comments in yaml file
 user_list = []
 date_dict = {}
 user_dict = {}
+follow_date = {}
 RR = 0 #Retention Rate
 RR_one = 0 #para=1的人數
 RR_ne_one = 0 #para=-1的人數
@@ -51,7 +52,7 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # Retention Rate 要加進一筆�
     else: dict.update({key_1: {key_2: val_2}})
 
 def InputUserData(line_id, action, timestamp): # 輸入使用者資料，並將其存到 user_data.json
-    global user_list, user_dict, RR_ne_one, RR_one, RR, date_dict
+    global user_list, user_dict, RR_ne_one, RR_one, RR, date_dict, follow_date
     #period=(兩週又三天) ; para=使用者的參數為 0/1/-1
     period = 17
     #退追的使用者
@@ -61,23 +62,40 @@ def InputUserData(line_id, action, timestamp): # 輸入使用者資料，並將�
     else: 
         #新增的使用者
         if line_id not in user_list: 
-            user_list.append(line_id)
-            #period(兩週後)的時間
             yy, mm, dd = int(timestamp[0:4]), int(timestamp[5:7]), int(timestamp[8:10])
+            addTwoDimDict(follow_date, line_id, "yy", yy)
+            addTwoDimDict(follow_date, line_id, "mm", mm)
+            addTwoDimDict(follow_date, line_id, "dd", dd)
+            #加入 follow cardbo date
+            addTwoDimDict(user_dict, line_id, "follow cardbo date", timestamp[0:10])
+            #加入 after period
             after_period = datetime.datetime(yy, mm, dd) + datetime.timedelta(days=period)
             ap_str = after_period.strftime('%Y-%m-%d')
-            #使用者資料
-            addTwoDimDict(user_dict, line_id, "follow cardbo date", timestamp[0:10])
             addTwoDimDict(user_dict, line_id, "after period date", ap_str)
-            addTwoDimDict(user_dict, line_id, "parameter", 0)
+            #加入 log in date
             addTwoDimDict(user_dict, line_id, "log in date", [])
-        if timestamp[0:10] not in user_dict[line_id]["log in date"]: 
-            user_dict[line_id]["log in date"].append(timestamp[0:10])
-            #如果parameter=-1的使用者之後有回鍋，parameter直接變1
+            if timestamp[0:10] not in user_dict[line_id]["log in date"]: 
+                user_dict[line_id]["log in date"].append(timestamp[0:10])
+            #加入參數 0/1/-1
+            addTwoDimDict(user_dict, line_id, "parameter", 0)
+            user_list.append(line_id)
+            #如果parameter=-1的使用者之後有回鍋，parameter直接變1，user list 被刪掉
             if (user_dict[line_id]["parameter"] == -1): 
                 user_dict[line_id]["parameter"] = 1
                 RR_ne_one -= 1
                 RR_one += 1
+        else: 
+            yy_2, mm_2, dd_2 = int(timestamp[0:4]), int(timestamp[5:7]), int(timestamp[8:10])
+            #找出第一天使用是哪天
+            if (yy_2 <= follow_date[line_id]["yy"]) and (mm_2 <= follow_date[line_id]["mm"]) and (dd_2 <= follow_date[line_id]["dd"]):
+                follow_date[line_id]["yy"] = yy_2
+                follow_date[line_id]["mm"] = mm_2
+                follow_date[line_id]["dd"] = dd_2
+                user_dict[line_id]["follow cardbo date"] = timestamp[0:10]
+                after_period = datetime.datetime(yy_2, mm_2, dd_2) + datetime.timedelta(days=period)
+                ap_str = after_period.strftime('%Y-%m-%d')
+                user_dict[line_id]["after period date"] = ap_str
+            user_dict[line_id]["log in date"].append(timestamp[0:10])
     file = './user_action_log/Retention_Rate/user_data.json'
     with open(file, 'w', encoding='utf-8') as f: json.dump(user_dict, f, indent=4, separators=(',', ': '))
 
@@ -133,9 +151,10 @@ InputUserData("User_5", "follow cardbo", "2020-10-10 14:50")
 InputUserData("User_6", "follow cardbo", "2020-02-01 14:50")
 InputUserData("User_7", "go_setting", "2021-02-14 14:50")
 InputUserData("User_3", "search store", "2020-09-06 11:20")
-InputUserData("User_3", "search store", "2020-09-20 12:20")
+InputUserData("User_3", "search store", "2020-09-19 12:20")
 InputUserData("User_5", "unfollow cardbo", "2020-10-11 14:50")
 InputUserData("User_5", "follow cardbo", "2020-10-11 14:50")
+InputUserData("User_5", "search store", "2020-10-27 14:50")
 
 '''
 today = datetime.datetime(2020, 2, 13) + datetime.timedelta(days=17)
