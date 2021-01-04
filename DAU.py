@@ -21,9 +21,6 @@
 ####################################################################################################################################
 import json
 from datetime import datetime
-import yaml 
-import pathlib # without open file
-from ruamel.yaml import YAML # could retend comments in yaml file
 
 ####################################################################################################################################
 #                                                          parameter                                                               #
@@ -48,8 +45,9 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資
 ####################################################################################################################################
 #                                                        main function                                                             #
 ####################################################################################################################################
-def openfile_DAU(fname):
-    with open('./user_action_log/UserData/json_data/%s'%fname, 'r', encoding='utf-8') as f1:
+def openfile_DAU(filename):
+    global myDAUdict
+    with open('./user_action_log/UserData/json_data/%s.json'%filename, 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
         user_id = file["user"][i]["lineId"]
@@ -59,9 +57,8 @@ def openfile_DAU(fname):
         if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
             ClickOnce(user_id, action, timestamp)
         # 檢查是否有在執行
-        if i % 1000 == 0: 
-            text = "DAU: " + str(i)
-            print(text)
+        if i % 1000 == 0: print(i)
+    DAUData2Json(myDAUdict)
 
 def ClickOnce(user_id, action, timestamp):
     global myDAUdict, clicklist, userlist, MAUuserlist, monthlist, DAU_dict, usernum_dict, MAU_dict
@@ -91,7 +88,7 @@ def ClickOnce(user_id, action, timestamp):
             MAU_month = month + "'s search store MAU"
             myDAUdict[MAU_month] = MAU_dict[timestamp[0:7]]
             addTwoDimDict(myDAUdict, time_key, "Total click times", DAU_dict[UsageClick])
-            addTwoDimDict(myDAUdict, time_key, "Daily different users", usernum_dict[UsageClick])
+            addTwoDimDict(myDAUdict, time_key, "DAU", usernum_dict[UsageClick])
     except: 
         print("Please log correct action name.") 
 
@@ -101,6 +98,7 @@ def DAUData2Json(DAU_list):
         file_name = key[0:7] # write to a Json file, file name = 2020-09.json
         if file_name not in filenamelist: filenamelist.append(file_name)
     for name in filenamelist:
+        print("name: ", name)
         file = './user_action_log/DAU/%s.json' % name
         add_DAU = {}
         for date in DAU_list:
@@ -127,8 +125,7 @@ def CleanCache_DAU():
     #now = datetime.now()
     # 每天的 0:00 更新一次資料
     #if (now.hour == 0) and (now.minute == 0):
-        #openfile_DAU('filename')
-        #DAUData2Json(myDAUdict)
-
+    #openfile_DAU("User-2020-10-13")
+    #DAUData2Json(myDAUdict) > 包含在openfile_DAU中 
 
 # openfile_DAU 吃進的 file 怎麼和 exe 檔連結

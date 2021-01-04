@@ -9,9 +9,6 @@
 ####################################################################################################################################
 import json
 import datetime
-import yaml 
-import pathlib # without open file
-from ruamel.yaml import YAML # could retend comments in yaml file
 
 ####################################################################################################################################
 #                                                          parameter                                                               #
@@ -41,7 +38,7 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資
 #                                                        main function                                                             #
 ####################################################################################################################################
 def openfile_WAU(filename):
-    with open('./user_action_log/UserData/json_data/UserData_0928.json', 'r', encoding='utf-8') as f1:
+    with open('./user_action_log/UserData/json_data/%s.json'%filename, 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
         user_id = file["user"][i]["lineId"]
@@ -156,7 +153,9 @@ def WAUCalculate(user_id, action, value, timestamp):
 
 def WAUData2Json(dict):
     global start_date, end_date, WAU_dict
-    filename = start_date + '_' + end_date
+    e = (datetime.date.today()).strftime('%Y-%m-%d')
+    s = (datetime.date.today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+    filename = s + '_' + e
     file = './user_action_log/WAU/%s.json' % filename
     with open(file, 'w', encoding='utf-8') as f: json.dump(WAU_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
     
@@ -175,7 +174,7 @@ def CleanCache_WAU():
 #if __name__=="__main__":
     # 每週一更新一次資料
     #if (datetime.date.today().weekday() == 6):
-        #openfile_WAU('filename')
+        #openfile_WAU()
         #WAUData2Json(WAU_dict)
 
 

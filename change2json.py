@@ -7,7 +7,8 @@ import json
 #                                                        main function                                                             #
 ####################################################################################################################################
 def ModifyFile(filename):
-    with open('./user_action_log/UserData/raw_data/UserAction_2020_0928.json', 'r', encoding='utf-8') as f1, open('./user_action_log/UserData/json_data/Usertest.json', 'a+', encoding= 'utf-8') as f2:
+    with open('./user_action_log/UserData/raw_data/%s.json'%filename, 'r', encoding='utf-8') as f1, open('./user_action_log/UserData/json_data/%s.json'%filename, 'a+', encoding= 'utf-8') as f2:
+        print("hi")
         f2.write("{\"user\": [")
         n = 0
         for line in f1:
@@ -17,7 +18,6 @@ def ModifyFile(filename):
             n += 1
         f2.write("]}")
         f2.close()
-
 
 #記得手動在第一行加上 {"user":
 #記得手動刪除中間多餘的 [

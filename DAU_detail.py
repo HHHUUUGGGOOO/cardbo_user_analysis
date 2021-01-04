@@ -9,9 +9,6 @@
 ####################################################################################################################################
 import json
 import datetime
-import yaml 
-import pathlib # without open file
-from ruamel.yaml import YAML # could retend comments in yaml file
 
 ####################################################################################################################################
 #                                                          parameter                                                               #
@@ -40,7 +37,7 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # DAU 要加進一筆二維dict資
 #                                                        main function                                                             #
 ####################################################################################################################################
 def openfile_DAU_detail(filename):
-    with open('./user_action_log/UserData/json_data/UserData_0928.json', 'r', encoding='utf-8') as f1:
+    with open('./user_action_log/UserData/json_data/%s.json'%filename, 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
         user_id = file["user"][i]["lineId"]
@@ -59,9 +56,7 @@ def DAUCalculate(user_id, action, value, timestamp):
     percent_ccuser = 0
     # mark=1 代表在十大電商中, mark=0 為 default, 表不在十大電商中
     mark = 0 
-    for i in range(1):
-        start = (datetime.date.today() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
-        day_list.append(start)
+    day_list.append(start_date)
     if timestamp[0:10] in day_list:
         # 一天內不同的user共有多少人
         if (user_id not in user_list): 
@@ -155,7 +150,8 @@ def DAUCalculate(user_id, action, value, timestamp):
 
 def DAUData2Json(dict):
     global start_date, DAU_dict
-    filename = start_date 
+    name = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    filename = name
     file = './user_action_log/DAU/DAU_detail/%s.json' % filename
     with open(file, 'w', encoding='utf-8') as f: json.dump(DAU_dict, f, ensure_ascii=False, indent=4, separators=(',', ': '))
     
@@ -174,8 +170,8 @@ def CleanCache_DAU():
 #if __name__=="__main__":
     # 每週日更新一次資料
     #if (datetime.date.today().weekday() == 6):
-        #openfile_DAU_detail('filename')
-        #DAUData2Json(DAU_dict)
+    #openfile_DAU_detail("User-2020-10-14")
+    #DAUData2Json(DAU_dict)
 
 
 #openfile 的檔案

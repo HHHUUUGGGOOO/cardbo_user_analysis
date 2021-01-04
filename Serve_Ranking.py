@@ -28,15 +28,12 @@
 import json
 import time
 import datetime
-import yaml 
-import pathlib # without open file
-from ruamel.yaml import YAML # could retend comments in yaml file
 
 ####################################################################################################################################
 #                                                          parameter                                                               #
 ####################################################################################################################################
 func_dict, cate_dict, TotalClick = {}, {}, {}
-month_list = []
+month_list, date_list = [], []
 last_time = ""
 # 加卡伯好友
 follow_cardbo = {}
@@ -82,16 +79,26 @@ def addThreeDimDict(thedict, key_a, key_b, key_c, val): # Function Ranking 要�
 #                                                        main function                                                             #
 ####################################################################################################################################
 def openfile_SR(filename):
-    with open('./user_action_log/UserData/json_data/UserData_0928.json', 'r', encoding='utf-8') as f1:
+    global date_list
+    with open('./user_action_log/UserData/json_data/%s.json'%filename, 'r', encoding='utf-8') as f1:
         file = json.load(f1)
     for i in range(len(file["user"])):
         user_id = file["user"][i]["lineId"]
-        action = file["user"][i]["actionName"]
-        value = file["user"][i]["actionValue"]
         timestamp = file["user"][i]["time"]["$date"]
         # 分別是 Ryan 和 Brandon 的 user_id
         if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
-            ClickCategory(action, value, timestamp)
+            if (timestamp[0:7] not in date_list):
+                date_list.append(timestamp[0:7])
+    for j in range(len(date_list)):
+        for i in range(len(file["user"])):
+            user_id = file["user"][i]["lineId"]
+            action = file["user"][i]["actionName"]
+            value = file["user"][i]["actionValue"]
+            timestamp = file["user"][i]["time"]["$date"]
+            # 分別是 Ryan 和 Brandon 的 user_id
+            if (user_id != "U479da6a87ed25efcab3605de091e27de") or (user_id != "U7e6184e094767a9df9ac6c574f83376f"):
+                if (timestamp[0:7] == date_list[j]):
+                    ClickCategory(action, value, timestamp)
         if i % 1000 == 0: print(i)
 
 def ClickCategory(action, value, timestamp):
@@ -313,13 +320,12 @@ def CleanCache_SR():
 ####################################################################################################################################
 #                                                              main                                                                #
 ####################################################################################################################################
-if __name__=="__main__":
+#if __name__=="__main__":
     # 每週一更新一次資料
-    if (datetime.date.today().weekday() == 0):
-        openfile_SR('filename')
-        Func2Json('filename')
-        Cate2Json('filename')
-
+    #if (datetime.date.today().weekday() == 0):
+        #openfile_SR()
+        #Func2Json("2020-09")
+        #Cate2Json("2020-09")
 
 #openfile_SR()吃的檔案 & 建檔吃的filename
 

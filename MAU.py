@@ -14,9 +14,6 @@
 ####################################################################################################################################
 from datetime import datetime
 import json
-import yaml # import yaml
-import pathlib # without open file
-from ruamel.yaml import YAML # could retend comments in yaml file
 
 ####################################################################################################################################
 #                                                          parameter                                                               #
@@ -48,10 +45,9 @@ def addTwoDimDict(dict, key_1, key_2, val_2): # MAU 要加進一筆二維dict資
 #                                                        main function                                                             #
 ####################################################################################################################################
 def openfile(filename):
-    for mon in ["2020-09"]:
-        with open('./user_action_log/DAU/%s.json'%mon, 'r', encoding='utf-8') as f1:
-            file_1 = json.load(f1)
-        MAUData2Json(file_1)
+    with open('./user_action_log/DAU/%s.json'%filename, 'r', encoding='utf-8') as f1:
+        file_1 = json.load(f1)
+    MAUData2Json(file_1)
 
 def MAUData2Json(file): # 吃進的file裡面都是同個月份的日期，如: 2020-09.json
     global MAU, Users, filename, now, yearlist, datadict, monthlist, month, start_date, end_date, store_MAU
@@ -76,16 +72,15 @@ def MAUData2Json(file): # 吃進的file裡面都是同個月份的日期，如: 
             MAU += file[date]["Total click times"]
         count += 1
     duration = start_date + " ~ " + end_date
-    for name in yearlist:
-        file = './user_action_log/MAU/%s.json' % name
-        addTwoDimDict(datadict, month, "Monthly search store's different users", Users)
-        addTwoDimDict(datadict, month, "Monthly Activated Usage", MAU)
-        addTwoDimDict(datadict, month, "Duration", duration)
-        add_MAU = {}
-        for key in datadict:
-            if (key[0:4] == name):
-                add_MAU[key] = datadict[key]
-                with open(file, 'w', encoding='utf-8') as f: json.dump(add_MAU, f, indent=4, sort_keys=True, separators=(',', ': '))
+    f = './user_action_log/MAU/%s.json' % start_date[0:7]
+    addTwoDimDict(datadict, month, "Search Store's MAU", Users)
+    addTwoDimDict(datadict, month, "Monthly Total Click", MAU)
+    addTwoDimDict(datadict, month, "Duration", duration)
+    add_MAU = {}
+    for key in datadict:
+        if (key[0:7] == start_date[0:7]):
+            add_MAU[key] = datadict[key]
+            with open(f, 'w', encoding='utf-8') as f: json.dump(add_MAU, f, indent=4, sort_keys=True, separators=(',', ': '))
     MAU = 0
 
 def CleanCache_MAU():
@@ -101,7 +96,7 @@ def CleanCache_MAU():
     #now = datetime.now()
     # 每月 1 號更新一次資料
     #if (now.day == 1):
-        #openfile('filename')
+    #openfile("2020-10")
 
 
 # openfile 裡面要吃的檔要怎麼涵蓋到 DAU 所有檔案而不用列舉 list
